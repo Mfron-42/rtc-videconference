@@ -1,10 +1,25 @@
-import { Component } from '@angular/core';
-
+import { Component, ViewChild, ElementRef, EventEmitter } from "@angular/core";
+import { User } from './services/rtc-user.service';
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.scss"]
 })
 export class AppComponent {
-  title = 'test-webrtc-angular';
+  public users : User[] = [];
+
+  constructor() {
+    this.addGeneratedUser();
+  }
+
+  public addGeneratedUser(){
+    this.users.push(this.generateUser());
+  }
+
+  private generateUser() : User {
+    return {
+      id : Math.round(Math.random() * 100000)
+    };
+  }
 }
+
