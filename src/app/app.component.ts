@@ -1,25 +1,32 @@
 import { Component, ViewChild, ElementRef, EventEmitter } from "@angular/core";
-import { User } from './services/rtc-user.service';
+import { DoctorService, Doctor } from './services/doctor.service';
+import { User } from './services/a-user.service';
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"]
 })
 export class AppComponent {
-  public users : User[] = [];
-
-  constructor() {
-    this.addGeneratedUser();
+  private patientCredential = {
+    login : "matthieu@tessan.io",
+    password : "123456"
   }
 
-  public addGeneratedUser(){
-    this.users.push(this.generateUser());
+  private doctorCredential = {
+    login : "matthieu@tessan.io",
+    password : "123456"
   }
 
-  private generateUser() : User {
-    return {
-      id : Math.round(Math.random() * 100000)
-    };
+  public doctor : Doctor;
+  public patient : Doctor;
+
+  constructor(public doctorService : DoctorService) {
+    doctorService.login(this.doctorCredential.login, this.doctorCredential.password)
+      .then(user => this.doctor = user);
+    doctorService.login(this.patientCredential.login, this.patientCredential.password)
+      .then(user => this.patient = user);
   }
+
+
 }
 

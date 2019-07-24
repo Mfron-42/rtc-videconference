@@ -5,15 +5,16 @@ import { NgModule } from "@angular/core";
 
 import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
-import { RTCUserService } from './services/rtc-user.service';
+import { DoctorService } from './services/doctor.service';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
     AppComponent,
     RTCConnectionComponent
   ],
-  imports: [BrowserModule, AppRoutingModule],
-  providers: [RTCUserService],
+  imports: [BrowserModule, AppRoutingModule, HttpClientModule],
+  providers: [DoctorService],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-<h1> Video user : {{user.id}}</h1>
+<h1> Video user : {{user | json}}</h1>
 <video autoplay [srcObject]="mainStream" class="local-video"></video>
 
 <div *ngFor="let remoteUser of usersPeer">

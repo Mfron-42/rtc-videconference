@@ -1,2 +1,3 @@
-<app-rtc-connection *ngFor="let user of users" [user]="user"></app-rtc-connection>
-<button (click)="addGeneratedUser()">Add user</button>
+<app-rtc-connection *ngIf="doctor" [user]="doctor" [userService]="doctorService"></app-rtc-connection>
+<app-rtc-connection *ngIf="patient" [user]="patient" [userService]="doctorService"></app-rtc-connection>
+<!-- <button (click)="addGeneratedUser()">Add user</button> -->
