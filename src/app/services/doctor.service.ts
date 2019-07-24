@@ -10,12 +10,8 @@ import { HubConnection } from '@aspnet/signalr';
 })
 export class DoctorService extends AUserService
 {
-    public readonly serverURL : string = "http://192.168.43.28:5000";
-    private users : User[] = [];
-    public userJoined : Subject<User> = new Subject<User>();
-    public userLeft : Subject<User> = new Subject<User>();
-    private invitationSent : Subject<{invitation : RTCInformation, source: User, dest: User}> = new Subject<{invitation : RTCInformation, source: User,  dest: User}>();
-
+    public readonly serverURL : string = "http://telemedicinedoctorserver-qa.azurewebsites.net";
+    
     public constructor(http : HttpClient) {
         super(http);
     }
@@ -30,32 +26,8 @@ export class DoctorService extends AUserService
         return super.buildConnection("/hubs/waiting-room");
     }
 
-    public onInvitation(user : User, func : (invitation : RTCInformation, user : User) => any) : void {
-        this.invitationSent.subscribe(inv => {
-            if (inv.dest !== user)
-                return;
-            func(inv.invitation, inv.source);
-        })
-    }
-
     public login(email : string, password : string) : Promise<Doctor> {
         return super.login(email, password, "/api/doctor/login") as  Promise<Doctor>;
-    }    
-
-    public join(user : User) : User[] {
-        const currentUsers = this.users;
-        this.users = [...currentUsers, user];
-        this.userJoined.next(user);
-        return currentUsers;
-    }
-
-    public leave(user : User){
-        this.users = this.users.filter(u => u != user);
-        this.userLeft.next(user);
-    }
-
-    public sendInvitation(source:  User, dest: User, invitation : RTCInformation) : void {
-        this.invitationSent.next({source, invitation, dest});
     }
 }
 

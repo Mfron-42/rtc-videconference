@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef, EventEmitter } from "@angular/core";
 import { DoctorService, Doctor } from './services/doctor.service';
 import { User } from './services/a-user.service';
+import { PatientService } from './services/patient.service';
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
@@ -20,11 +21,11 @@ export class AppComponent {
   public doctor : Doctor;
   public patient : Doctor;
 
-  constructor(public doctorService : DoctorService) {
+  constructor(public doctorService : DoctorService, public patientService : PatientService) {
     doctorService.login(this.doctorCredential.login, this.doctorCredential.password)
       .then(user => this.doctor = user);
-    doctorService.login(this.patientCredential.login, this.patientCredential.password)
-      .then(user => this.patient = user);
+    // patientService.login(this.patientCredential.login, this.patientCredential.password)
+    //   .then(user => this.patient = user);
   }
 
 
