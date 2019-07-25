@@ -47,12 +47,16 @@ export class RTCConnectionComponent implements OnInit{
         this.log("invitations received", invitations);
       });
       connection.onclose(e => {
-        console.warn("Connection closed : " + JSON.stringify(e));
+        this.warn("Connection closed", e);
       });
   }
 
   private log(...params : any ){
     console.log(...[this.userService.userType, ...params]);
+  }
+
+  private warn(...params : any ){
+    console.warn(...[this.userService.userType, ...params]);
   }
 
   private initRTC(): void {
