@@ -46,6 +46,9 @@ export class RTCConnectionComponent implements OnInit{
       connection.on("invitations", (invitations) => {
         this.log("invitations received", invitations);
       });
+      connection.onclose(e => {
+        console.warn("Connection closed : " + JSON.stringify(e));
+      });
   }
 
   private log(...params : any ){
