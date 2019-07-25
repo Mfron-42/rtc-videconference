@@ -35,7 +35,7 @@ export class RTCConnectionComponent implements OnInit{
     let connection = this.userService.hubConnection();
     connection.start()
       .then(() => {
-        this.log("Connected", 5);
+        this.log("Connected");
         this.log("Invoking join");
         return connection.invoke("join");
       })
