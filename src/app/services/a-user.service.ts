@@ -4,6 +4,7 @@ import { HubConnection, HubConnectionBuilder, HttpTransportType } from '@aspnet/
 export abstract class AUserService
 {
     protected abstract serverURL : string;
+    public abstract userType : string;
     protected user : User;
 
     public constructor(protected http : HttpClient){

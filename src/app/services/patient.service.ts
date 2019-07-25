@@ -8,6 +8,7 @@ import { HubConnection } from '@aspnet/signalr';
 })
 export class PatientService extends AUserService
 {
+    public userType: string = "Patient";
     public readonly serverURL : string = "http://telemedicinepatientserver-qa.azurewebsites.net";
     
     public constructor(http : HttpClient) {

@@ -24,8 +24,8 @@ export class AppComponent {
   constructor(public doctorService : DoctorService, public patientService : PatientService) {
     doctorService.login(this.doctorCredential.login, this.doctorCredential.password)
       .then(user => this.doctor = user);
-    // patientService.login(this.patientCredential.login, this.patientCredential.password)
-    //   .then(user => this.patient = user);
+    patientService.login(this.patientCredential.login, this.patientCredential.password)
+      .then(user => this.patient = user);
   }
 
 
