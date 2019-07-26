@@ -9,7 +9,7 @@ import { PatientService } from './services/patient.service';
 })
 export class AppComponent {
   private patientCredential = {
-    login : "matthieu@tessan.io",
+    login : "matthieu@patient.io",
     password : "123456"
   }
 
@@ -22,8 +22,10 @@ export class AppComponent {
   public patient : Doctor;
 
   constructor(public doctorService : DoctorService, public patientService : PatientService) {
-    doctorService.login(this.doctorCredential.login, this.doctorCredential.password)
+    setTimeout(() => {
+      doctorService.login(this.doctorCredential.login, this.doctorCredential.password)
       .then(user => this.doctor = user);
+    }, 10000);
     patientService.login(this.patientCredential.login, this.patientCredential.password)
       .then(user => this.patient = user);
   }

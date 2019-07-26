@@ -23,8 +23,12 @@ export class DoctorService extends AUserService
         return service;
     }
 
-    public hubConnection() : HubConnection {
+    public matchingConnection() : HubConnection {
         return super.buildConnection("/hubs/waiting-room");
+    }
+
+    public consultationConnection() : HubConnection {
+        return super.buildConnection("/hubs/consultation");
     }
 
     public login(email : string, password : string) : Promise<Doctor> {

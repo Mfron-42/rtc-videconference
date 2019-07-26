@@ -1,9 +1,20 @@
-<h1> Video user : {{user | json}}</h1>
+<h1> Video user : {{ user.email }} </h1>
+
 <video autoplay [srcObject]="mainStream" class="local-video"></video>
 
 <div *ngFor="let remoteUser of usersPeer">
     <video autoplay [srcObject]="remoteUser.stream" class="remote-video"></video>
 </div>
 
+<div *ngIf="isConnected()">
+    <h2>Invitations</h2>
+    <div *ngFor="let invitation  of invitations">
+        <h3>{{ invitation.firstname }}  {{invitation.lastName }}</h3>
+        <button (click)="acceptInvitation(invitation)" *ngIf="invitation.localStatus == 'PENDING'"> ACCEPTER </button>
+        <button (click)="refuseInvitation(invitation)" *ngIf="invitation.localStatus == 'PENDING'"> REFUSER </button>
+        <h4 *ngIf="invitation.localStatus == 'ACCEPTED'"> L invitation a ete accepte </h4>
+        <h4 *ngIf="invitation.localStatus == 'REFUSED'"> L invitation a ete refuse </h4>
+    </div>
+</div>
 
 

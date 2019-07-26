@@ -17,7 +17,9 @@ export abstract class AUserService
         this.user = user;
     }
 
-    public abstract hubConnection() : HubConnection;
+    public abstract matchingConnection() : HubConnection;
+
+    public abstract consultationConnection() : HubConnection;
 
     protected buildConnection(path : string) : HubConnection {
         return new HubConnectionBuilder()
@@ -40,9 +42,43 @@ export abstract class AUserService
 
 export interface User {
     id : string,
+    tessanId : string,
     accessToken : string,
     firstname: string,
     lastname: string,
     email: string,
 }
-  
+
+export interface Invitation {
+    userId: string;
+    firstname: string;
+    lastName: string;
+    specialities: string[];
+    localStatus: "ACCEPTED" | "REFUSED" | "PENDING";
+    remoteStatus: "ACCEPTED" | "REFUSED" | "PENDING";
+    creationDate: string;
+}
+
+export interface Consultation {
+    id : string,
+    startedAt : string,
+    endedAt : string,
+    motive : string,
+    patient : ConsultationUser,
+    doctor : ConsultationUser,
+    guests : ConsultationUser[]
+}
+
+export interface ConsultationUser {
+    userType : "DOCTOR" | "PATIENT" | "GUEST",
+    userId : string,
+    organizationId : string,
+    firstname : string,
+    lastname : string,
+    enabledOptions : Option[],
+    status : ConnectionStatus
+}
+
+export type ConnectionStatus = "CONNECTED" | "DISCONNECTED";
+
+export type Option = "VIDEO_CONFERENCE";
