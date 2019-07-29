@@ -6,7 +6,8 @@
     <video autoplay [srcObject]="remoteUser.stream" class="remote-video"></video>
 </div>
 
-<div *ngIf="isConnected()">
+<div *ngIf="isConnectedToMatching()">
+    <h2> Matching </h2>
     <h2>Invitations</h2>
     <div *ngFor="let invitation  of invitations">
         <h3>{{ invitation.firstname }}  {{invitation.lastName }}</h3>
@@ -16,5 +17,14 @@
         <h4 *ngIf="invitation.localStatus == 'REFUSED'"> L invitation a ete refuse </h4>
     </div>
 </div>
+<div *ngIf="isConnectedToConsultation()">
+        <h2> Consultation </h2>
+        <div>
+            <h3>Chat</h3>
+            <p *ngFor="let message of messages"> {{ message.user.firstname }} : {{message.text}}</p>
+        </div>
+        <input type="text" (keydown.enter)="sendChatMessage($event)">
+</div>
+
 
 

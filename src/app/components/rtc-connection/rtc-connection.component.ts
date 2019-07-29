@@ -21,9 +21,10 @@ export class RTCConnectionComponent implements OnInit{
   private matchingConnection : HubConnection;
   private consultationConnection : HubConnection;
   private consultation : Consultation;
+  public messages : Message[] = [];
 
   constructor(private appRef: ApplicationRef) {
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: true, audio : true })
       .then(stream => {
         this.mainStream = stream;
       });
@@ -31,28 +32,26 @@ export class RTCConnectionComponent implements OnInit{
 
   public ngOnInit() {
     this.userService = this.userService.configure(this.user);
-    this.initSignalR();
+    this.initMatching();
   }
 
   public acceptInvitation(invitation : Invitation) : void {
-    this.checkInvoke("acceptInvitation", invitation.userId);
+    this.matchingConnection.invoke("acceptInvitation", invitation.userId);
   }
 
   public refuseInvitation(invitation : Invitation) : void {
-    this.checkInvoke("refuseInvitation", invitation.userId);
+    this.matchingConnection.invoke("refuseInvitation", invitation.userId);
   }
 
-  public isConnected() : boolean {
+  public isConnectedToMatching() : boolean {
     return this.matchingConnection && this.matchingConnection.state == HubConnectionState.Connected;
   }
 
-  private checkInvoke(methodName : string, ...params : any[]) : void {
-    if (!this.isConnected())
-      throw new Error("Not connected to the hub");
-    this.matchingConnection.invoke(methodName, ...params);
+  public isConnectedToConsultation() : boolean {
+    return this.consultationConnection && this.consultationConnection.state == HubConnectionState.Connected;
   }
 
-  private initSignalR(): void {
+  private initMatching(): void {
     this.matchingConnection = this.userService.matchingConnection();
     this.matchingConnection.start()
       .then(() => {
@@ -74,6 +73,7 @@ export class RTCConnectionComponent implements OnInit{
       this.matchingConnection.on("consultation", consultation => {
         this.log("Consultation received");
         this.onConsultation();
+        this.matchingConnection.stop();
       });
   }
 
@@ -98,15 +98,26 @@ export class RTCConnectionComponent implements OnInit{
       this.addUser(user, peer);
     });
 
-    // this.consultationConnection.on("userLeft", user => {
-    //   this.log("remove user", user);
-    //   this.removeUser(user);
-    // });
+    this.consultationConnection.on("userLeft", user => {
+      this.log("remove user", user);
+      this.removeUser(user);
+    });
 
     this.consultationConnection.on("rtcConferenceHandshake", (userId, infos) => {
       const userpeer = this.getPeer(userId);
       userpeer.addInformations(infos);
     });
+    this.consultationConnection.on("chatMessage", (senderId : string, message : string) => {
+      this.messages.push({ user : this.getUser(senderId), text : message })
+    });
+  }
+
+
+  public sendChatMessage(event: KeyboardEvent) : void {
+    const input = event.srcElement as HTMLInputElement;
+    this.consultationConnection.invoke("sendChatMessage", input.value);
+    this.messages.push({ user : this.getUser(this.user.id), text : input.value});
+    input.value = "";
   }
 
   private sendRTCInformations(userId : string, informations:  RTCInformation) {
@@ -135,7 +146,15 @@ export class RTCConnectionComponent implements OnInit{
   }
 
   private getPeer(userId: string): RTCConnection {
-    return this.usersPeer.find(p => p.user.userId == userId).peer;
+    return this.getUserPeer(userId).peer;
+  }
+
+  private getUser(userId: string): ConsultationUser {
+    return this.getUserPeer(userId).user;
+  }
+
+  private getUserPeer(userId: string): UserPeer {
+    return this.usersPeer.find(p => p.user.userId == userId);
   }
 
   private addUser(user: ConsultationUser, connection: RTCConnection): void {
@@ -152,15 +171,21 @@ export class RTCConnectionComponent implements OnInit{
   }
 
   
-  // private removeUser(user: ConsultationUser): void {
-  //   const peer = this.getPeer(user);
-  //   peer.getPeer().close(); // check how to clean it correctly
-  //   this.usersPeer = this.usersPeer.filter(up => up.user.userId != user.userId);
-  // }
+  private removeUser(user: ConsultationUser): void {
+    const userPeer = this.getUserPeer(user.userId);
+    userPeer.peer.getPeer().close(); 
+    userPeer.stream = undefined;
+    userPeer.peer = undefined;
+  }
 }
 
 export class UserPeer {
   user: ConsultationUser;
   peer: RTCConnection;
   stream: MediaStream;
+}
+
+export class Message {
+  user : ConsultationUser;
+  text : string;
 }
