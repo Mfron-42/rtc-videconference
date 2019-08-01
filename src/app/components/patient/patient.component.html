@@ -1,0 +1,17 @@
+<h2>Patient</h2>
+
+<div *ngFor="let invitation of inviations">
+    <h3>Invitation : {{ invitation.firstname }}</h3>
+    <h4>Status : {{ invitation.remoteStatus }}</h4>
+    <button *ngIf="invitation.localStatus === 'PENDING'" (click)="accepteInvitation(invitation)"> Accepter </button>
+    <button *ngIf="invitation.localStatus === 'PENDING'" (click)="refuseInvitation(invitation)"> Refuser </button>
+</div>
+
+<div *ngIf="consultation">
+    <video autoplay *ngFor="let userStream of streams" [srcObject]="userStream.stream"></video>
+
+    <h3>Chat</h3>
+    <p *ngFor="let message of chatHistory"> {{ message.sender.firstname }} : {{ message.text }} </p>
+    <input type="text" (keyup.enter)="onSendText($event)">
+    <button (click)="abortConsultation()"> abort </button>
+</div>
