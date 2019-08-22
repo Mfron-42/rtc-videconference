@@ -3,14 +3,19 @@ import { Event } from './Events';
 import { DeviceRequests, Request } from './Request';
 import { IDevice } from './IDevice';
 import { Device } from './DeviceConference';
+import { RTCConnection } from 'light-rtc';
 
 export abstract class ADeviceSender implements IDevice {
   private readonly onRequest = new DeviceRequests();
+  protected streams: {
+    userId: string;
+    peer: RTCConnection;
+  }[] = [];
   public deviceId: string;
   public name: string;
 
   public constructor(
-    private readonly connection: DeviceConnection,
+    protected readonly connection: DeviceConnection,
     device: Device
   ) {
     this.deviceId = device.id;
@@ -28,17 +33,13 @@ export abstract class ADeviceSender implements IDevice {
     this.onRequest.next({ originId, request });
   }
 
-  public sendRTCInfos(userId: string, infos: any): void {
-    this.connection.sendRTCInfos(userId, this.deviceId, infos);
-  }
-
-  public addRTCInfos(userId: string, infos: any): void {}
+  public addRTCInfos(userId: string, infos: any): void { }
 
   public stop(...args: any[]): Promise<any> {
-    return this.connection.stopSender(this);
+    return this.connection.senderStopped(this);
   }
 
   public start(...params: any): Promise<any> {
-    return this.connection.startSender(this);
+    return this.connection.senderStarted(this);
   }
 }

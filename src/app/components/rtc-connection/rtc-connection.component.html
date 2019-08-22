@@ -1,2 +1,4 @@
 <h1>{{ user.firstname }}</h1>
+<video *ngFor="let videoDevice of videoDevices" autoplay [ngClass]="videoDevice.stream?.id"
+    [srcObject]="videoDevice.stream"></video>
 <button (click)="requestDevice()">Ask device</button>

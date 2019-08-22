@@ -3,6 +3,7 @@ import { DeviceEvents, Event } from './Events';
 import { IDevice } from './IDevice';
 import { Request } from './Request';
 import { UserDevice } from './DeviceConference';
+import { RTCInformation, RTCConnection } from 'light-rtc';
 
 export abstract class ADeviceReceiver implements IDevice {
   public readonly userId: string;
@@ -11,7 +12,7 @@ export abstract class ADeviceReceiver implements IDevice {
   private readonly onEvent = new DeviceEvents();
 
   public constructor(
-    private connection: DeviceConnection,
+    protected connection: DeviceConnection,
     userDevice: UserDevice
   ) {
     this.userId = userDevice.userId;
@@ -24,25 +25,20 @@ export abstract class ADeviceReceiver implements IDevice {
     return this.connection.sendRequest(this, request);
   }
 
-  public sendRTCInfos(infos: any): void {
-    this.connection.sendRTCInfos(this.userId, this.deviceId, infos);
-  }
-
   public abstract init(events: DeviceEvents): void;
 
   public publishEvent(event: Event): void {
     this.onEvent.next(event);
   }
 
-  public addRTCInfos(userId: string, infos: any): void {}
-
   public stop(...args: any[]): void {
-    this.connection.stopReceiver(this);
+    this.connection.receiverStopped(this);
   }
 
   public start(): void {
-    this.connection.startReceiver(this);
+    this.connection.receiverStarted(this);
   }
+
 }
 
 export class EmptyDeviceReceiver extends ADeviceReceiver {
@@ -50,9 +46,9 @@ export class EmptyDeviceReceiver extends ADeviceReceiver {
     super(connection, userDevice);
     console.warn(
       'Empty receiver created. You wont be able to retreive the data of this device : ' +
-        JSON.stringify(userDevice)
+      JSON.stringify(userDevice)
     );
   }
 
-  public init(events: DeviceEvents): void {}
+  public init(events: DeviceEvents): void { }
 }

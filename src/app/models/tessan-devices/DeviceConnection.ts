@@ -13,6 +13,32 @@ import { RTCInformation } from 'light-rtc';
 import { DeviceConference, User, Device } from './DeviceConference';
 import { UserDevice } from './DeviceConference';
 
+const CONNECTION_EVENTS = {
+  CLOSE: 'CLOSE',
+  DEBUG: 'DEBUG'
+};
+
+const SERVER_EVENTS = {
+  DEVICE_REQUEST: 'deviceRequest',
+  DEVICE_EVENT: 'deviceEvent',
+  USER_JOINED: 'userJoined',
+  START_DEVICE_REQUEST: 'startDeviceRequest',
+  STOP_DEVICE_REQUEST: 'stopDeviceRequest',
+  DEVICE_RTC_INFOS: 'RTCInfos',
+  DEVICE_STARTED: 'deviceStarted',
+  DEVICE_STOPPED: 'deviceStopped'
+};
+
+const SERVER_METHODES = {
+  SEND_RTC_INFOS: 'sendRTCInfos',
+  CREATE_REQUEST: 'createRequest',
+  CREATE_EVENT: 'createEvent',
+  STOP_DEVICE_REQUEST: 'stopDeviceRequest',
+  START_DEVICE_REQUEST: 'startDeviceRequest',
+  DEVICE_STARTED: 'deviceStarted',
+  DEVICE_STOPPED: 'deviceStopped'
+};
+
 export class DeviceConnection {
   private connection: HubConnection;
   private eventEmitter: EventEmitter = new EventEmitter();
@@ -27,6 +53,7 @@ export class DeviceConnection {
   private deviceConference: DeviceConference;
   private user: User;
   private readonly conferenceId: string;
+  private readonly localDevicesEmitter: EventEmitter = new EventEmitter();
 
   constructor(serverUrl: string, user: TessanUser, conferenceId: string) {
     this.tessanUser = user;
@@ -42,7 +69,7 @@ export class DeviceConnection {
     this.connection.onclose(error =>
       this.eventEmitter.emit(CONNECTION_EVENTS.CLOSE, error)
     );
-    this.initDevices();
+    this.initSubscriptions();
   }
 
   public async connect(
@@ -76,10 +103,14 @@ export class DeviceConnection {
   }
 
   public getUsers(): User[] {
-    return this.getAllUsers().filter(u => u !== this.getUser());
+    return this.getAllUsers().filter(u => u.userId !== this.getUser().userId);
   }
 
-  private initDevices(): void {
+  private initSubscriptions(): void {
+    this.onUserJoined(user => {
+      const userRemoved = this.deviceConference.users.filter(u => u.userId !== user.userId);
+      this.deviceConference.users = [...userRemoved, user];
+    });
     this.onDeviceEvent((device, event) =>
       this.getReceiver(device).publishEvent(event)
     );
@@ -102,36 +133,54 @@ export class DeviceConnection {
       this.getSender(device).stop(...args)
     );
     this.onDeviceStopped(device => this.getReceiver(device).stop());
-    this.onRTCInfos((senderId, device, infos) =>
-      (this.getReceiver(device) || this.getSender(device)).addRTCInfos(
-        senderId,
-        infos
-      )
-    );
   }
 
-  public stopSender(device: ADeviceSender): Promise<void> {
+  public async senderStopped(device: ADeviceSender): Promise<void> {
     this.senders = this.senders.filter(d => d !== device);
-    return this.connection.send(
+    await this.connection.send(
       SERVER_METHODES.DEVICE_STOPPED,
       device.deviceId
     );
+    this.localDevicesEmitter.emit('senderStopped', device);
   }
 
-  public startSender(device: ADeviceSender): Promise<void> {
+  public async senderStarted(device: ADeviceSender): Promise<void> {
     this.senders.push(device);
-    return this.connection.send(
+    await this.connection.send(
       SERVER_METHODES.DEVICE_STARTED,
       device.deviceId
     );
+    this.localDevicesEmitter.emit('senderStarted', device);
   }
 
-  public stopReceiver(device: ADeviceReceiver): void {
+  public receiverStopped(device: ADeviceReceiver): void {
     this.receivers = this.receivers.filter(d => d !== device);
+    this.localDevicesEmitter.emit('receiverStopped', device);
   }
 
-  public startReceiver(device: ADeviceReceiver): void {
+  public receiverStarted(device: ADeviceReceiver): void {
     this.receivers.push(device);
+    this.localDevicesEmitter.emit('receiverStarted', device);
+  }
+
+  public onSenderStopped<T extends ADeviceSender>(action: (device: T) => any): () => void {
+    this.localDevicesEmitter.addListener('senderStopped', action);
+    return () => this.localDevicesEmitter.removeListener('senderStopped', action);
+  }
+
+  public onSenderStarted<T extends ADeviceSender>(action: (device: T) => any): () => void {
+    this.localDevicesEmitter.addListener('senderStarted', action);
+    return () => this.localDevicesEmitter.removeListener('senderStarted', action);
+  }
+
+  public onReceiverStopped<T extends ADeviceReceiver>(action: (device: T) => any): () => void {
+    this.localDevicesEmitter.addListener('receiverStopped', action);
+    return () => this.localDevicesEmitter.removeListener('receiverStopped', action);
+  }
+
+  public onReceiverStarted<T extends ADeviceReceiver>(action: (device: T) => any): () => void {
+    this.localDevicesEmitter.addListener('receiverStarted', action);
+    return () => this.localDevicesEmitter.removeListener('receiverStarted', action);
   }
 
   private getReceiver(userDevice: UserDevice) {
@@ -156,6 +205,15 @@ export class DeviceConnection {
     this.eventEmitter.addListener(SERVER_EVENTS.DEVICE_EVENT, action);
     return () =>
       this.eventEmitter.removeListener(SERVER_EVENTS.DEVICE_EVENT, action);
+  }
+
+
+  private onUserJoined(
+    action: (user: User) => any
+  ): () => void {
+    this.eventEmitter.addListener(SERVER_EVENTS.USER_JOINED, action);
+    return () =>
+      this.eventEmitter.removeListener(SERVER_EVENTS.USER_JOINED, action);
   }
 
   private onDeviceStarted(action: (userDevice: UserDevice) => any): () => void {
@@ -194,12 +252,14 @@ export class DeviceConnection {
 
   public onRTCInfos(
     action: (
-      sernderId: string,
+      senderId: string,
       userDevice: UserDevice,
-      infos: RTCInformation
+      infos: RTCInformation,
+      targetType: 'RECEIVER' | 'SENDER'
     ) => any
   ): () => void {
-    this.eventEmitter.addListener(SERVER_EVENTS.DEVICE_RTC_INFOS, action);
+    this.eventEmitter.addListener(SERVER_EVENTS.DEVICE_RTC_INFOS,
+      (senderId, userDevice, infos, args) => action(senderId, userDevice, infos, args[0]));
     return () =>
       this.eventEmitter.removeListener(SERVER_EVENTS.DEVICE_RTC_INFOS, action);
   }
@@ -207,13 +267,15 @@ export class DeviceConnection {
   public sendRTCInfos(
     userId: string,
     deviceId: string,
-    rtcInfos: any
+    rtcInfos: any,
+    targetType: 'RECEIVER' | 'SENDER'
   ): Promise<void> {
     return this.connection.send(
       SERVER_METHODES.SEND_RTC_INFOS,
       userId,
       deviceId,
-      rtcInfos
+      rtcInfos,
+      [targetType]
     );
   }
 
@@ -265,28 +327,3 @@ export class DeviceConnection {
       this.eventEmitter.removeListener(CONNECTION_EVENTS.DEBUG, func);
   }
 }
-
-const SERVER_EVENTS = {
-  DEVICE_REQUEST: 'deviceRequest',
-  DEVICE_EVENT: 'deviceEvent',
-  START_DEVICE_REQUEST: 'startDeviceRequest',
-  STOP_DEVICE_REQUEST: 'stopDeviceRequest',
-  DEVICE_RTC_INFOS: 'RTCInfos',
-  DEVICE_STARTED: 'deviceStarted',
-  DEVICE_STOPPED: 'deviceStopped'
-};
-
-const SERVER_METHODES = {
-  SEND_RTC_INFOS: 'sendRTCInfos',
-  CREATE_REQUEST: 'createRequest',
-  CREATE_EVENT: 'createEvent',
-  STOP_DEVICE_REQUEST: 'stopDeviceRequest',
-  START_DEVICE_REQUEST: 'startDeviceRequest',
-  DEVICE_STARTED: 'deviceStarted',
-  DEVICE_STOPPED: 'deviceStopped'
-};
-
-const CONNECTION_EVENTS = {
-  CLOSE: 'CLOSE',
-  DEBUG: 'DEBUG'
-};
