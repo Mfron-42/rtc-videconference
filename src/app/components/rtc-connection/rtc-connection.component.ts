@@ -2,11 +2,14 @@ import { Component, Input, ApplicationRef, OnInit } from '@angular/core';
 import { RTCUserService, User } from 'src/app/services/rtc-user.service';
 import { RTCConnection, RTCReceiver, RTCInitiator } from 'light-rtc';
 import { DeviceConnection } from 'src/app/models/tessan-devices/DeviceConnection';
-import { AVideoDeviceReceiver } from 'src/app/models/tessan-devices/AVideoDeviceReceiver';
-import { AVideoDeviceSender } from 'src/app/models/tessan-devices/AVideoDeviceSender';
+import { VideoDeviceReceiver } from 'src/app/models/tessan-devices/VideoDeviceReceiver';
+import { VideoDeviceSender } from 'src/app/models/tessan-devices/VideoDeviceSender';
 import { TessanUser } from 'src/app/models/tessan-devices/TessanUser';
 import { DeviceConference } from 'src/app/models/tessan-devices/DeviceConference';
 import { ADeviceReceiver } from 'src/app/models/tessan-devices/ADeviceReceiver';
+import { ADeviceSender } from 'src/app/models/tessan-devices/ADeviceSender';
+import { DeviceEvents } from 'src/app/models/tessan-devices/Events';
+import { DeviceRequests } from 'src/app/models/tessan-devices/Request';
 
 @Component({
   selector: 'app-rtc-connection',
@@ -18,7 +21,7 @@ export class RTCConnectionComponent implements OnInit {
   public user: TessanUser;
   public mainStream: MediaStream;
   public deviceConnection: DeviceConnection;
-  public videoDevices: AVideoDeviceReceiver[] = [];
+  public videoDevices: VideoDeviceReceiver[] = [];
 
   constructor() { }
 
@@ -34,41 +37,55 @@ export class RTCConnectionComponent implements OnInit {
       this.user,
       deviceConfId
     );
+
+
+
+
     const conference = this.deviceConnection.connect(
       devices,
       userDevice => {
-        const device = new AVideoDeviceReceiver(this.deviceConnection, userDevice);
+        const device = new OxymeterReceiver(this.deviceConnection, userDevice);
         return device;
       },
       (device, originId) => {
-        return new AVideoDeviceSender(this.deviceConnection, device);
+        switch (device.name) {
+
+        }
+        if (device.name == 'OXYMETER') {
+          return new OxymeterSender(this.deviceConnection, device);
+        }
       }
     );
 
-    this.deviceConnection.onReceiverStarted((receiver) => {
-      console.log('Receiver started', receiver);
-      receiver.sendRequest({ type: 'test', content: 'lol' });
-    });
-    this.deviceConnection.onSenderStarted((sender) => {
-      console.log('Sender started', sender);
-      sender.sendEvent({ type: 'test', content: 'lol' });
+
+    this.deviceConnection.onLocalReceiverStarted((receiver) => {
+      this.videoDevices.push(receiver as any);
     });
   }
 
-  public requestDevice() {
+  public startDeviceRequest() {
     const device = this.deviceConnection.getUsers()[0].availableDevices[0];
     if (!device) { return; }
-    console.log('Start request', device);
     this.deviceConnection.startDeviceRequest(device.id);
   }
+}
 
-  private getDeviceInfos(deviceName: RegExp): Promise<MediaDeviceInfo> {
-    return navigator.mediaDevices.enumerateDevices().then(devices => {
-      return devices.find(device => {
-        const deviceLabel = device.label.toLocaleLowerCase();
-        return deviceName.test(deviceLabel);
-      });
-    });
+class OtoscopeSender extends VideoDeviceSender {
+  public start(...params: any[]): Promise<any> {
+    return navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => super.start(stream));
+  }
+}
+
+class OxymeterReceiver extends ADeviceReceiver {
+  public init(events: DeviceEvents) {
+    events.onEvent('OXYGENE', (event) => console.log(event.content.value));
+  }
+}
+
+class OxymeterSender extends ADeviceSender {
+  public init(request: DeviceRequests) {
+    setInterval(() => this.sendEvent({ type: 'OXYGENE', content: { value: 4 } }), 1000);
   }
 }
 

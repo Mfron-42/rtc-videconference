@@ -1,5 +1,4 @@
-import { EventEmitter } from 'events';
-import { Subject, Observable, PartialObserver, Subscription } from 'rxjs';
+import { Subject, Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 export class DeviceEvents extends Subject<Event> {
@@ -13,11 +12,11 @@ export class DeviceEvents extends Subject<Event> {
   }
 }
 
-export interface StreamEvent extends Event {
-  content: MediaStream;
-}
-
 export interface Event {
   type: string;
   content: any;
+}
+
+export interface StreamEvent extends Event {
+  content: MediaStream;
 }

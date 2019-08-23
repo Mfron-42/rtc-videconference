@@ -25,13 +25,24 @@ export abstract class ADeviceReceiver implements IDevice {
     return this.connection.sendRequest(this, request);
   }
 
-  public abstract init(events: DeviceEvents): void;
+  public addRTCInformations(infos: RTCInformation): void { }
+
+  public sendRTCInformations(infos: RTCInformation): void {
+    this.connection.sendRTCInformations(this.userId, this.deviceId, infos, 'SENDER');
+  }
+
+  public init(events: DeviceEvents): void { }
 
   public publishEvent(event: Event): void {
     this.onEvent.next(event);
   }
 
+  public sendStopRequest(...args: any[]): void {
+    this.connection.stopDeviceRequest(this.deviceId, ...args);
+  }
+
   public stop(...args: any[]): void {
+    this.dispose();
     this.connection.receiverStopped(this);
   }
 
@@ -39,16 +50,5 @@ export abstract class ADeviceReceiver implements IDevice {
     this.connection.receiverStarted(this);
   }
 
-}
-
-export class EmptyDeviceReceiver extends ADeviceReceiver {
-  constructor(connection: DeviceConnection, userDevice: UserDevice) {
-    super(connection, userDevice);
-    console.warn(
-      'Empty receiver created. You wont be able to retreive the data of this device : ' +
-      JSON.stringify(userDevice)
-    );
-  }
-
-  public init(events: DeviceEvents): void { }
+  public dispose(): void { }
 }

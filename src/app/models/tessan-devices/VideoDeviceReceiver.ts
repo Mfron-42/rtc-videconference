@@ -5,35 +5,26 @@ import { EventEmitter } from 'events';
 import { DeviceConnection } from './DeviceConnection';
 import { UserDevice } from './DeviceConference';
 
-export class AVideoDeviceReceiver extends ADeviceReceiver {
+export class VideoDeviceReceiver extends ADeviceReceiver {
   private emitter: EventEmitter = new EventEmitter();
   protected peer: RTCConnection;
-  private unsubsciptions: (() => void)[] = [];
   public picturesUrls: string[] = [];
-  public stream: MediaStream;
+  private stream: MediaStream;
 
   constructor(connection: DeviceConnection, userDevice: UserDevice) {
     super(connection, userDevice);
-    this.peer = new RTCInitiator(undefined, infos => this.sendRTCInfos(infos));
+    this.peer = new RTCInitiator(undefined, infos => this.sendRTCInformations(infos));
     this.peer.onStream(stream => this.emitter.emit('stream', stream));
-    this.onStream((stream) => {
-      console.log('stream', stream);
-      this.stream = stream;
-    });
-    this.RTCInfosSubscriptions();
+    this.onStream(stream => this.stream = stream);
   }
 
-  private RTCInfosSubscriptions(): void {
-    const unsubscribe = this.connection.onRTCInfos((senderId, device, infos, targetType: 'RECEIVER' | 'SENDER') => {
-      if (targetType !== 'RECEIVER' || device.id !== this.deviceId) {
-        return;
-      }
-      this.peer.addInformations(infos);
-    });
-    this.unsubsciptions.push(unsubscribe);
+  public getStream(): MediaStream {
+    return this.stream;
   }
 
-  public init(events: DeviceEvents): void { events.onEvent('lol', console.log); }
+  public addRTCInformations(infos: RTCInformation): void {
+    this.peer.addInformations(infos);
+  }
 
   public onStream(action: (stream: MediaStream) => void): () => void {
     this.emitter.addListener('stream', action);
@@ -48,13 +39,9 @@ export class AVideoDeviceReceiver extends ADeviceReceiver {
     return b;
   }
 
-  public sendRTCInfos(infos: RTCInformation): void {
-    this.connection.sendRTCInfos(this.userId, this.deviceId, infos, 'SENDER');
-  }
-
   public dispose(): void {
+    this.peer.getPeer().close();
     this.picturesUrls.forEach(URL.revokeObjectURL);
-    this.unsubsciptions.forEach(a => a());
     this.picturesUrls = [];
   }
 }
