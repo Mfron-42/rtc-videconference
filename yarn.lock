@@ -579,9 +579,9 @@ acorn-dynamic-import@^4.0.0:
   integrity sha512-d3OEjQV4ROpoflsnUA8HozoIR504TFxNivYEUi6uwz0IYhBkTDXGuWlNdMtybRt3nqVx/L6XqMt0FxkXuWKZhw==
 
 acorn@^6.0.5:
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.2.0.tgz#67f0da2fc339d6cfb5d6fb244fd449f33cd8bbe3"
-  integrity sha512-8oe72N3WPMjA+2zVG71Ia0nXZ8DpQH+QyyHO+p06jT8eg8FGG3FbcUIi8KziHlAfheJQZeoqbvq1mQSQHXKYLw==
+  version "6.4.2"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-6.4.2.tgz#35866fd710528e92de10cf06016498e47e39e1e6"
+  integrity sha512-XtGIhXwF8YM8bJhGxG5kXgjkEuNGLTkoYqVE+KMR+aspr4KGYmKYg7yUe3KghyQ9yheNwLnjmzh/7+gfDBmHCQ==
 
 adm-zip@^0.4.9:
   version "0.4.13"
@@ -3959,6 +3959,11 @@ lie@~3.3.0:
   integrity sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==
   dependencies:
     immediate "~3.0.5"
+
+light-rtc@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/light-rtc/-/light-rtc-1.5.2.tgz#7a76b064c2c2ba7b69ec2fa7346f961f87ade081"
+  integrity sha512-IZ2zsGFzIJYpN0GNJb/iaO0A/Mg9jZaJwdbOLvSBXvFUt2XIiCmpT3bbLTA5xmZcDJjEPLvuqtC5pQ/WEKF7wQ==
 
 loader-runner@^2.3.0:
   version "2.4.0"
