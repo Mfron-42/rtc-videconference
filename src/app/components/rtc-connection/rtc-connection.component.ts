@@ -25,15 +25,17 @@ export class RTCConnectionComponent {
   private initRTC(): void {
     this.rtcUsers.join(this.user).forEach(u => {
       const peer = new RTCReceiver(this.mainStream, (infos) => this.rtcUsers.sendInvitation(this.user, u, infos));
-      peer.onMsg('test', console.log);
-      peer.send('test', 'abc');
+      peer.onMsg('channel-test', msg =>  console.log(u.id + ' receive : ' + msg));
+      peer.send('channel-test', 'test message from ' + u.id);
       this.addUser(u, peer);
 
     });
     this.rtcUsers.userJoined.subscribe(u => {
-      const peer =  new RTCInitiator(this.mainStream, (infos) => this.rtcUsers.sendInvitation(this.user, u, infos), undefined, undefined, undefined, ['test']);
-      peer.onMsg('test', console.log);
-      peer.send('test', 'abc');
+      const peer =  new RTCInitiator(this.mainStream, (infos) => this.rtcUsers.sendInvitation(this.user, u, infos), undefined, {
+        channels : ['channel-test']
+      });
+      peer.onMsg('channel-test', msg =>  console.log(u.id + ' receive : ' + msg));
+      peer.send('channel-test', 'test message from ' + u.id);
       this.addUser(u, peer);
     });
     this.rtcUsers.onInvitation(this.user, (invitation, user) => this.getPeer(user).addInformations(invitation));
